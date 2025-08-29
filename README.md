@@ -2,6 +2,21 @@
 
 A powerful tool for automatically analyzing and documenting REST APIs with a modern React frontend and Python backend.
 
+## 🌐 **Live Demo**
+
+**Try it now:** [https://universal-api-generator.onrender.com/](https://universal-api-generator.onrender.com/)
+
+Experience the Universal API Generator in action! The live demo allows you to:
+- Analyze any public API endpoint
+- Generate comprehensive Swagger documentation
+- View interactive API documentation with Swagger UI
+- Test the full functionality without installation
+
+**Example APIs to try:**
+- `https://api.github.com` - GitHub API
+- `https://jsonplaceholder.typicode.com` - JSONPlaceholder API
+- `https://api.openf1.org/v1` - OpenF1 API
+
 ## 📋 **Overview**
 
 Universal API Generator is a comprehensive solution that combines:

@@ -135,11 +135,13 @@ class UniversalAPIGenerator:
             discovered_endpoints = []
             
             for endpoint in self.custom_endpoints:
-                # Ensure endpoint starts with /
+                # Normalize endpoint format - handle both "meeting" and "/meeting"
+                endpoint = endpoint.strip()
                 if not endpoint.startswith('/'):
                     endpoint = '/' + endpoint
                 
-                url = urljoin(self.base_url, endpoint)
+                # Fix URL construction - use direct concatenation instead of urljoin
+                url = self.base_url + endpoint
                 try:
                     response = self.session.get(url, timeout=self.timeout)
                     if self._is_valid_endpoint(response):
@@ -162,7 +164,7 @@ class UniversalAPIGenerator:
         
         # Test endpoint patterns
         for pattern in self.endpoint_patterns:
-            url = urljoin(self.base_url, pattern)
+            url = self.base_url + pattern
             try:
                 response = self.session.get(url, timeout=self.timeout)
                 if self._is_valid_endpoint(response):
@@ -195,7 +197,7 @@ class UniversalAPIGenerator:
         
         for openapi_path in openapi_urls:
             try:
-                url = urljoin(self.base_url, openapi_path)
+                url = self.base_url + openapi_path
                 response = self.session.get(url, timeout=self.timeout)
                 if response.status_code == 200:
                     spec = response.json()
@@ -217,7 +219,7 @@ class UniversalAPIGenerator:
         discovered = []
         for doc_url in doc_urls:
             try:
-                url = urljoin(self.base_url, doc_url)
+                url = self.base_url + doc_url
                 response = self.session.get(url, timeout=self.timeout)
                 if response.status_code == 200:
                     # Try to extract endpoints from documentation page
@@ -264,10 +266,27 @@ class UniversalAPIGenerator:
 
     def _is_valid_endpoint(self, response: requests.Response) -> bool:
         """Check if response indicates a valid endpoint"""
-        # Only consider 200 as a healthy response
-        # Other status codes might indicate the endpoint exists but have issues
-        # We'll be more conservative and only accept successful responses
-        return response.status_code == 200
+        status = response.status_code
+        
+        # Definitely valid responses
+        if status == 200:
+            return True
+        
+        # Responses that indicate the endpoint exists but has issues
+        # These are still valid endpoints, just with different access requirements
+        valid_status_codes = [
+            200,  # OK
+            201,  # Created
+            202,  # Accepted
+            204,  # No Content
+            401,  # Unauthorized (endpoint exists, needs auth)
+            403,  # Forbidden (endpoint exists, access denied)
+            405,  # Method Not Allowed (endpoint exists, wrong method)
+            422,  # Unprocessable Entity (endpoint exists, bad request)
+            429,  # Too Many Requests (endpoint exists, rate limited)
+        ]
+        
+        return status in valid_status_codes
 
     def _get_endpoint_validation_reason(self, response: requests.Response) -> str:
         """Get a human-readable reason for endpoint validation decision"""
@@ -325,7 +344,7 @@ class UniversalAPIGenerator:
         
         # Only test GET and POST methods
         test_methods = ['GET', 'POST']
-        url = urljoin(self.base_url, endpoint)
+        url = self.base_url + endpoint
         
         for method in test_methods:
             try:
@@ -352,7 +371,7 @@ class UniversalAPIGenerator:
 
     def _analyze_method_comprehensive(self, endpoint: str, method: str) -> Dict[str, Any]:
         """Comprehensive method analysis with parameter validation"""
-        url = urljoin(self.base_url, endpoint)
+        url = self.base_url + endpoint
         
         analysis = {
             'parameters': {},
